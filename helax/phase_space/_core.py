@@ -1,18 +1,17 @@
-from typing import Callable, Optional
 import math
-import functools
+from typing import Callable, Optional
 
+import chex
 import jax
 import jax.numpy as jnp
-import chex
 import numpy as np
 
 from helax.utils import kallen_lambda
 
-SquaredMatrixElement = Callable[[chex.ArrayDevice], chex.Numeric]
+SquaredMatrixElement = Callable[[chex.Array], chex.Numeric]
 
 
-def _rambo_init(key: chex.ArrayDevice, n: int, batch_size: int) -> chex.ArrayDevice:
+def _rambo_init(key: chex.Array, n: int, batch_size: int) -> chex.Array:
     keys = jax.random.split(key, 4)
     rho1 = jax.random.uniform(keys[0], shape=(n, batch_size))
     rho2 = jax.random.uniform(keys[1], shape=(n, batch_size))
@@ -29,7 +28,7 @@ def _rambo_init(key: chex.ArrayDevice, n: int, batch_size: int) -> chex.ArrayDev
     )
 
 
-def _rambo_boost(momenta: chex.ArrayDevice, cme: float):
+def _rambo_boost(momenta: chex.Array, cme: float):
     # expecting an array with dimension (4, # final-state-particles)
     # chex.assert_rank(momenta, 2)
 
@@ -61,7 +60,7 @@ def _rambo_boost(momenta: chex.ArrayDevice, cme: float):
 
 
 def _rambo_compute_scale_factor(
-    momenta: chex.ArrayDevice, cme: float, masses: chex.ArrayDevice, iterations: int
+    momenta: chex.Array, cme: float, masses: chex.Array, iterations: int
 ) -> chex.Numeric:
     e = momenta[0]
 
@@ -78,8 +77,8 @@ def _rambo_compute_scale_factor(
 
 
 def _rambo_correct_masses(
-    momenta: chex.ArrayDevice, cme: float, masses: chex.ArrayDevice, iterations: int
-) -> chex.ArrayDevice:
+    momenta: chex.Array, cme: float, masses: chex.Array, iterations: int
+) -> chex.Array:
     xi = _rambo_compute_scale_factor(momenta, cme, masses, iterations)
     return jnp.array(
         [
@@ -92,7 +91,7 @@ def _rambo_correct_masses(
 
 
 def _rambo_weight_rescale_factors(
-    momenta: chex.ArrayDevice, cme: float, n: int
+    momenta: chex.Array, cme: float, n: int
 ) -> chex.Numeric:
     modsqr = jnp.sum(jnp.square(momenta[1:]), axis=0)
     mod = jnp.sqrt(modsqr)
@@ -104,9 +103,7 @@ def _rambo_weight_rescale_factors(
     return t1 / t2 * t3 * cme
 
 
-def _rambo_compute_weights(
-    momenta: chex.ArrayDevice, cme: float, n: int, base_wgt: float
-):
+def _rambo_compute_weights(momenta: chex.Array, cme: float, n: int, base_wgt: float):
     return _rambo_weight_rescale_factors(momenta, cme, n) * base_wgt
 
 
@@ -119,8 +116,8 @@ def _rambo_base_weight(n: int, cme: float):
 
 def _rambo_generate(
     cme: float,
-    masses: chex.ArrayDevice,
-    key: chex.ArrayDevice,
+    masses: chex.Array,
+    key: chex.Array,
     batch_size: int,
     iterations: int,
     base_wgt: float,
@@ -136,7 +133,7 @@ def _rambo_generate(
 def generate_phase_space(
     cme: float,
     masses: np.ndarray,
-    key: chex.ArrayDevice,
+    key: chex.Array,
     *,
     msqrd: Optional[SquaredMatrixElement] = None,
     batch_size: int = 10_000,
@@ -163,7 +160,7 @@ def generate_phase_space(
 def integrate_phase_space(
     cme: float,
     masses: np.ndarray,
-    key: chex.ArrayDevice,
+    key: chex.Array,
     *,
     msqrd: Optional[SquaredMatrixElement] = None,
     batch_size: int = 10_000,
@@ -186,7 +183,7 @@ def integrate_phase_space(
 def decay_width(
     mass: float,
     masses: np.ndarray,
-    key: chex.ArrayDevice,
+    key: chex.Array,
     *,
     msqrd: Optional[SquaredMatrixElement] = None,
     batch_size: int = 10_000,
@@ -212,7 +209,7 @@ def cross_section(
     m1: float,
     m2: float,
     masses: np.ndarray,
-    key: chex.ArrayDevice,
+    key: chex.Array,
     *,
     msqrd: Optional[SquaredMatrixElement] = None,
     batch_size: int = 10_000,
