@@ -6,10 +6,10 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from helax import amplitudes, phase_space, wavefunctions
-from helax.lvector import lnorm_sqr
-from helax.utils import kallen_lambda
-from helax.wavefunctions import DiracWf, ScalarWf, VectorWf
+from helax.jax import amplitudes, phase_space, wavefunctions
+from helax.jax.lvector import lnorm_sqr
+from helax.jax.utils import abs2, kallen_lambda
+from helax.jax.wavefunctions import DiracWf, ScalarWf, VectorWf
 
 MUON_MASS = 1.056584e-01
 G_FERMI = 1.166379e-05
@@ -156,9 +156,8 @@ def test_width_mu_to_e_nu_nu():
 
         def msqrd(imu, ie, ive, ivm):
             w_wf = current_ff_to_v(v_wll, MASS_W, WIDTH_W, vm_wfs[ivm], mu_wfs[imu])
-            return jnp.square(
-                jnp.abs(amplitude_ffv(v_wll, e_wfs[ie], ve_wfs[ive], w_wf))
-            )
+            amp = amplitude_ffv(v_wll, e_wfs[ie], ve_wfs[ive], w_wf)
+            return abs2(amp)
 
         idxs = np.array(np.meshgrid([0, 1], [0, 1], [0, 1], [0, 1])).T.reshape(-1, 4)
         res = sum(msqrd(i_n, i_v1, i_v2, i_v3) for (i_n, i_v1, i_v2, i_v3) in idxs)
@@ -190,9 +189,8 @@ def test_width_t_to_b_w():
         v_tbw = amplitudes.VertexFFV(left=EL / (np.sqrt(2.0) * SW), right=0.0)
 
         def msqrd(it, ib, iw):
-            return jnp.square(
-                jnp.abs(amplitude_ffv(v_tbw, b_wfs[ib], t_wfs[it], w_wfs[iw]))
-            )
+            amp = amplitude_ffv(v_tbw, b_wfs[ib], t_wfs[it], w_wfs[iw])
+            return abs2(amp)
 
         idxs = np.array(np.meshgrid([0, 1], [0, 1], [0, 1, 2])).T.reshape(-1, 3)
         res = sum(msqrd(it, ib, iw) for (it, ib, iw) in idxs)
@@ -234,7 +232,7 @@ def test_width_h_to_b_b():
         )
 
         def msqrd(i1, i2):
-            return jnp.square(jnp.abs(amplitude_ffs(v_hbb, wf1s[i2], wf2s[i1], h_wf)))
+            return abs2(amplitude_ffs(v_hbb, wf1s[i2], wf2s[i1], h_wf))
 
         idxs = np.array(np.meshgrid([0, 1], [0, 1])).T.reshape(-1, 2)
         res = sum(msqrd(i1, i2) for (i1, i2) in idxs)
@@ -287,8 +285,7 @@ def test_dark_matter_annihilation_scalar_mediator():
 
         def msqrd(i1, i2, i3, i4):
             swf = current_ff_to_s(vxx, mass_s, width_s, wf2s[i2], wf1s[i1])
-            amp = amplitude_ffs(vff, wf3s[i3], wf4s[i4], swf)
-            return jnp.square(jnp.abs(amp))
+            return abs2(amplitude_ffs(vff, wf3s[i3], wf4s[i4], swf))
 
         idxs = np.array(np.meshgrid([0, 1], [0, 1], [0, 1], [0, 1])).T.reshape(-1, 4)
         res = sum(msqrd(i1, i2, i3, i4) for (i1, i2, i3, i4) in idxs)
@@ -308,4 +305,63 @@ def test_dark_matter_annihilation_scalar_mediator():
         * np.sqrt((s - 4 * mf**2) * (s - 4 * mx**2))
     ) / (16 * np.pi * s * ((s - mass_s**2) ** 2 + (mass_s * width_s) ** 2))
 
-    assert float(2 * cs) == pytest.approx(analytic, rel=1e-2, abs=0.0)
+    assert float(cs) == pytest.approx(analytic, rel=1e-2, abs=0.0)
+
+
+def test_dark_matter_annihilation_vector_mediator():
+    gvxx = 1.0
+    gvff = 1.0
+    mx = 10.0
+    mf = 1.0
+    cme = 3 * mx
+    mv = 1.0
+    widthv = 1.0
+
+    vxx = amplitudes.VertexFFV(left=gvxx, right=gvxx)
+    vff = amplitudes.VertexFFV(left=gvff, right=gvff)
+
+    ex = cme / 2.0
+    px = np.sqrt(ex**2 - mx**2)
+    p1 = jnp.expand_dims(jnp.array([ex, 0.0, 0.0, px]), -1)
+    p2 = jnp.expand_dims(jnp.array([ex, 0.0, 0.0, -px]), -1)
+
+    wf1s = spinor_u(p1, mx)
+    wf2s = spinor_vbar(p2, mx)
+
+    def msqrd_x_x_to_f_f(momenta):
+        p3 = momenta[:, 0]
+        p4 = momenta[:, 1]
+
+        wf3s = spinor_ubar(p3, mf)
+        wf4s = spinor_v(p4, mf)
+
+        def msqrd(i1, i2, i3, i4):
+            vwf = current_ff_to_v(vxx, mv, widthv, wf2s[i2], wf1s[i1])
+            return abs2(amplitude_ffv(vff, wf3s[i3], wf4s[i4], vwf))
+
+        idxs = np.array(np.meshgrid([0, 1], [0, 1], [0, 1], [0, 1])).T.reshape(-1, 4)
+        res = sum(msqrd(i1, i2, i3, i4) for (i1, i2, i3, i4) in idxs)
+
+        return res / 4.0
+
+    key = jax.random.PRNGKey(4)
+    cs = phase_space.cross_section(
+        cme, mx, mx, np.array([mf, mf]), key, msqrd=msqrd_x_x_to_f_f
+    )[0]
+
+    s = cme**2
+    analytic = (
+        gvff**2
+        * gvxx**2
+        * np.sqrt(s * (-4 * mf**2 + s))
+        * (2 * mf**2 + s)
+        * (2 * mx**2 + s)
+    ) / (
+        12.0
+        * np.pi
+        * s
+        * np.sqrt(s * (-4 * mx**2 + s))
+        * (mv**4 + s**2 + mv**2 * (-2 * s + widthv**2))
+    )
+
+    assert float(cs) == pytest.approx(analytic, rel=1e-2, abs=0.0)

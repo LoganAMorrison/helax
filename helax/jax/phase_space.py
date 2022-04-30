@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from helax.utils import kallen_lambda
+from .utils import kallen_lambda
 
 SquaredMatrixElement = Callable[[chex.Array], chex.Numeric]
 
