@@ -2,7 +2,7 @@ import chex
 import jax
 import jax.numpy as jnp
 
-from helax._common.vertices import VertexFFS, VertexFFV
+from helax.vertices import VertexFFS, VertexFFV
 
 from .lvector import ldot, lnorm_sqr
 from .wavefunctions import DiracWf, ScalarWf, VectorWf

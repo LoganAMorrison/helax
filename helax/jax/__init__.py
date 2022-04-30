@@ -1,5 +1,3 @@
-from helax._common import vertices
-
 from . import amplitudes, lvector, phase_space, utils, wavefunctions
 
 __all__ = [
@@ -8,5 +6,4 @@ __all__ = [
     "phase_space",
     "utils",
     "wavefunctions",
-    "vertices",
 ]

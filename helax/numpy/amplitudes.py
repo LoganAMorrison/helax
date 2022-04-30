@@ -1,6 +1,6 @@
 import numpy as np
 
-from helax._common.vertices import VertexFFS, VertexFFV
+from helax.vertices import VertexFFS, VertexFFV
 
 from .lvector import ldot, lnorm_sqr
 from .typing import RealArray
