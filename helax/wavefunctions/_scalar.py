@@ -1,8 +1,9 @@
-from typing import Union
 import functools
+from typing import Union
+
+import chex
 import jax
 import jax.numpy as jnp
-import chex
 from flax import struct
 
 from ._utils import dispatch
@@ -44,7 +45,7 @@ def scalar_wf(momentum: NdArray, out: bool) -> ScalarWf:
         Array containing the four-momentum of the particle.
         Must be 1 or 2 dimensional with leading dimension of size 4.
     """
-    s = -1 if out else 1
+    s = jax.lax.cond(out, -1, 1)
     p = jnp.array(momentum)
     wf = dispatch(_scalar_wf, _scalar_wf_vec, p)
     return ScalarWf(wavefunction=wf, momentum=s * p, direction=s)

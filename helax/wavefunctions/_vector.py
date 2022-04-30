@@ -1,8 +1,9 @@
-from typing import Union
 import functools
+from typing import Union
+
+import chex
 import jax
 import jax.numpy as jnp
-import chex
 from flax import struct
 
 NdArray = Union[chex.Array, chex.ArrayNumpy]
@@ -161,7 +162,7 @@ def vector_wf(momentum: NdArray, mass: float, spin: int, out: bool) -> VectorWf:
         If true, the returned wavefunction is outgoing.
     """
     _check_spin(spin)
-    s = -1 if out else 1
+    s = jax.lax.cond(out, -1, 1)
     p = jnp.array(momentum)
     wf = _dispatch(_vector_wf, _vector_wf_vec, p, mass, spin, s)
     return VectorWf(wavefunction=wf, momentum=s * p, direction=s)
