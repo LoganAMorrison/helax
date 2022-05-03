@@ -1,3 +1,4 @@
-# Helicity Amplitudes with Jax
+Helicity Amplitudes with Jax or NumPy
+-------------------------------------
 
-Implementation of HELAS using Jax.
+Implementation from scratch of the HELAS library using Jax and NumPy.
