@@ -16,7 +16,7 @@ setup(
     package_data={},
     python_requires=">=3.8",
     install_requires=["numpy>=1.20"],
-    extras_requires={"jax": ["jax>=0.3.4", "jaxlib>=0.3.2", "chex>=0.1"]},
+    extras_require={"jax": ["jax>=0.3.4", "jaxlib>=0.3.2", "chex>=0.1"]},
     keywords=["high-energy-physics", "quantum-field-theory"],
     zip_safe=True,
     classifiers=[
