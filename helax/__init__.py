@@ -1,3 +1,10 @@
-from helax import jax, numpy
+"""
+helax (`helax`)
 
-__all__ = ["jax", "numpy"]
+Helax is a package for computing helicity amplitudes.
+"""
+
+from helax import jax
+from helax.numpy import amplitudes, lvector, phase_space, utils, wavefunctions
+
+__all__ = ["jax", "amplitudes", "lvector", "phase_space", "utils", "wavefunctions"]

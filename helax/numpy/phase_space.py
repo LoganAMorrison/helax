@@ -5,8 +5,7 @@ Module for working with Lorentz-invariant phase-space.
 
 
 import math
-from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
-                    Union)
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -414,7 +413,7 @@ class PhaseSpace:
         batch_size: Optional[int] = None,
         seed: Optional[int] = None,
         dtype=np.float64,
-    ) -> Tuple[float, float]:
+    ) -> Tuple[np.float64, np.float64]:
         """
         Integrate over phase space.
 
@@ -447,9 +446,9 @@ class PhaseSpace:
                 errors.append(std)
 
             # Average of averages okay since all samples are same size
-            integral: float = np.nanmean(integrals)
+            integral = np.nanmean(integrals)
             # Combined error estimate using quadrature
-            error: float = np.sqrt(np.nansum(np.square(errors))) / len(errors)
+            error = np.sqrt(np.nansum(np.square(errors))) / len(errors)
 
             return integral, error
 
@@ -465,7 +464,7 @@ class PhaseSpace:
         batch_size: Optional[int] = None,
         seed: Optional[int] = None,
         dtype=np.float64,
-    ) -> Tuple[float, float]:
+    ) -> Tuple[np.float64, np.float64]:
         """
         Compute the decay width.
 
