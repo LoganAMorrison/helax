@@ -6,7 +6,7 @@ with open("README.md") as f:
 
 setup(
     name="helax",
-    version="0.1.0",
+    version="0.1.1",
     description="Package for computing helicity amplitudes using NumPy or Jax.",
     long_description=_long_description,
     long_description_content_type="text/markdown",
