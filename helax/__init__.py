@@ -1,10 +1,8 @@
 """
 helax (`helax`)
 
-Helax is a package for computing helicity amplitudes.
+Helax is a package for computing helicity amplitudes. We offer two different
+flavors: a pure `NumPy` version and a `jax` version. The `jax` version requires
+`jax` and `jaxlib` to be installed. The `jax` version is useful for utilizing a
+GPU.
 """
-
-from helax import jax
-from helax.numpy import amplitudes, lvector, phase_space, utils, wavefunctions
-
-__all__ = ["jax", "amplitudes", "lvector", "phase_space", "utils", "wavefunctions"]

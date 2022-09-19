@@ -93,7 +93,7 @@ def current_fs_to_f(
     vl = vertex.left
     vr = vertex.right
 
-    momentum = psi.momentum + psi.direction + phi.momentum
+    momentum = psi.momentum * psi.direction + phi.momentum
 
     wavefunction = jnp.array(
         [
@@ -134,7 +134,7 @@ def current_fv_to_f(
     vl = vertex.left
     vr = vertex.right
 
-    momentum = psi.momentum + psi.direction * polvec.momentum
+    momentum = psi.momentum * psi.direction * polvec.momentum
 
     wavefunction = jax.lax.switch(
         (psi.direction + 1) // 2,

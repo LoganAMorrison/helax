@@ -145,7 +145,7 @@ def generate_phase_space(
     iterations = 10
 
     if jit:
-        generator = jax.jit(_rambo_generate, static_argnums=(3, 4, 5, 6))
+        generator = jax.jit(_rambo_generate, static_argnums=(3, 4, 5))
     else:
         generator = _rambo_generate
 
