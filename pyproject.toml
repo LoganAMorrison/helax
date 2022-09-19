@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "helax"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python package for computing helicity amplitudes"
 authors = ["Logan A. Morrison <loganmorrison99@gmail.com>"]
 license = "MIT"
@@ -16,6 +16,8 @@ classifiers = [
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Unix",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
   "Topic :: Scientific/Engineering :: Physics",
   "Typing :: Typed",
 ]
