@@ -7,6 +7,20 @@ from .typing import ComplexArray, RealArray
 
 @dataclasses.dataclass
 class DiracWf:
+    """Dataclass for Dirac wavefunctions.
+
+    Attributes
+    ----------
+    wavefunction: complex array
+        4-Component Dirac spinor.
+    momentum: array
+        Four-momentum of the spinor. The momentum always points in the
+        direction of the fermion flow.
+    direction: array
+        1 for a u,v spinors and -1 for ubar,vbar spinors.
+
+    """
+
     wavefunction: ComplexArray
     momentum: RealArray
     direction: int
@@ -301,10 +315,10 @@ def __polvec_transverse(*, k: RealArray, spin: int, sgn: int) -> RealArray:
         kz = kz[mask]
         km = np.sqrt(np.square(kx) + np.square(ky) + np.square(kz))
 
-        kxt = kx / kt / np.sqrt(2)
-        kyt = ky / kt / np.sqrt(2)
+        kxt = kx / kt[mask] / np.sqrt(2)
+        kyt = ky / kt[mask] / np.sqrt(2)
         kzm = kz / km
-        ktm = kt / km / np.sqrt(2)
+        ktm = kt[mask] / km / np.sqrt(2)
 
         polvec[0, mask] = 0.0 + 0.0 * 1j
         polvec[1, mask] = -spin * kxt * kzm + +sgn * kyt * 1j
@@ -341,7 +355,7 @@ def __polvec_longitudinal(*, k: RealArray, mass: float) -> RealArray:
 
     mask = ~mask
     if np.any(mask):
-        n = e / (mass * km[mask])
+        n = e[mask] / (mass * km[mask])
         polvec[0, mask] = km[mask] / mass + 0.0j
         polvec[1, mask] = n * kx[mask] + 0.0j
         polvec[2, mask] = n * ky[mask] + 0.0j

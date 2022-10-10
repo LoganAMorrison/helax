@@ -10,14 +10,17 @@ IM = 1.0j
 
 
 def complex_mass_sqr(mass: float, width: float) -> complex:
-    return mass**2 - IM * mass * width
+    """Returns the complexified mass given the particle's width."""
+    return mass * (mass - 1j * width)
 
 
 def propagator_den(momentum: RealArray, mass: float, width: float) -> RealArray:
+    """Returns the scalar component of the propagator."""
     return IM / (lnorm_sqr(momentum) - complex_mass_sqr(mass, width))
 
 
 def attach_dirac(psi: DiracWf, mass: float, width: float) -> DiracWf:
+    """Attach a propagator to a Dirac wavefunction."""
     p = psi.momentum
     f = psi.wavefunction
 
