@@ -1,12 +1,90 @@
+"""Module for computing currents and amplitudes.
+
+
+Notes on signs
+==============
+
+All momentum are considered incoming, except for fermions. For fermions, the
+momentum always points along the direction of the fermion flow.
+
+[v,s](p) + [v,s](q) -> [v,s](k)
+-----------------------
+k = p + q
+
+    p ->     k=p+q ->
+    -------x------
+          /
+    -----
+    q ->
+
+
+f(p) + [v,s](q) -> f(k)
+-----------------------
+k = p + q
+
+    p ->     ->  k=p+q
+    --->---x--->---
+          /
+    -----
+    q ->
+
+
+fbar(p) + [v,s](q) -> fbar(k)
+-----------------------------
+k = p - q
+
+    p <-     <- k=p-q
+    ---<---x---<---
+          /
+    -----
+    q ->
+
+
+f(p) + fbar(q) -> [v,s](k)
+--------------------------
+k = p - q
+
+    p ->     -> k=p-q
+    --->---x------
+          /
+    --<--
+    q <-
+
+
+w(p) + w(q) -> s(k)
+-------------------
+k = p + q
+
+    p ->     -> k=p+q
+    --->---x------
+          /
+    -->--
+    q ->
+
+
+w^+(p) + w^+(q) -> s(k)
+---------------------------
+k = -p - q
+
+    p <-     -> k=-p-q
+    ---<---x------
+          /
+    --<--
+    q <-
+"""
+
+
 import numpy as np
 
-from helax.vertices import VertexFFS, VertexFFV
+from helax.vertices import VertexFFS, VertexFFV, VertexWWS, VertexWWV
 
+from .dirac import WeylS0, WeylS1, WeylS2, WeylS3
 from .lvector import ldot, lnorm_sqr
 from .typing import RealArray
-from .wavefunctions import DiracWf, ScalarWf, VectorWf
+from .wavefunctions import DiracWf, ScalarWf, VectorWf, WeylType, WeylWf
 
 IM = 1.0j
+DAGGER_TYPE = WeylType.Xd | WeylType.Yd
 
 
 def complex_mass_sqr(mass: float, width: float) -> complex:
@@ -53,6 +131,67 @@ def attach_dirac(psi: DiracWf, mass: float, width: float) -> DiracWf:
     return DiracWf(
         wavefunction=wavefunction, momentum=psi.momentum, direction=psi.direction
     )
+
+
+def attach_weyl(chi: WeylWf, mass: float, width: float) -> WeylWf:
+    """Attach a propagator to a Weyl wavefunction."""
+    p = chi.momentum
+    chi1 = chi.wavefunction[0]
+    chi2 = chi.wavefunction[1]
+
+    den = propagator_den(p, mass, width)
+
+    if chi.type & DAGGER_TYPE:
+        p_dot_sigma = p[0] * WeylS0 + p[1] * WeylS1 + p[2] * WeylS2 + p[3] * WeylS3
+        # If the spinor is a daggered spinor, then we want to compute
+        # z^b = x_a sigma^ab. This will yield a spinor with a raised index.
+        # To lower the index, we contract with the spinor metric tensor:
+        #   z_a = eps_ab * z^b
+        #     => z_1 = eps_12 * z^2 = -z^2
+        #     => z_2 = eps_21 * z^1 = +z^1
+        eta1 = IM * (p_dot_sigma[0, 0] * chi1 + p_dot_sigma[0, 1] * chi2) * den
+        eta2 = IM * (p_dot_sigma[1, 0] * chi1 + p_dot_sigma[1, 1] * chi2) * den
+
+        eta1, eta2 = -eta2, eta1
+
+    else:
+        p_dot_sigma = p[0] * WeylS0 - p[1] * WeylS1 - p[2] * WeylS2 - p[3] * WeylS3
+        # If the spinor isn't a daggered spinor, then we want to compute
+        # z_b = x^a sigma_ab. But our spinor is x_a. Need to raise the index,
+        # yielding: x^a = eps^ab x_b
+        #    => x^1 = eps^12 x_2 = +x_2
+        #    => x^2 = eps^21 x_1 = -x_1
+        chi1, chi2 = chi2, -chi1
+
+        eta1 = IM * (p_dot_sigma[0, 0] * chi1 + p_dot_sigma[0, 1] * chi2) * den
+        eta2 = IM * (p_dot_sigma[1, 0] * chi1 + p_dot_sigma[1, 1] * chi2) * den
+
+    wavefunction = np.array([eta1, eta2])
+
+    if chi.type == WeylType.X:
+        new_type = WeylType.Xd
+    elif chi.type == WeylType.Xd:
+        new_type = WeylType.X
+    elif chi.type == WeylType.Y:
+        new_type = WeylType.Yd
+    elif chi.type == WeylType.Yd:
+        new_type = WeylType.Y
+    else:
+        raise ValueError(f"Invalid weyl type '{chi.type}'.")
+
+    return WeylWf(wavefunction=wavefunction, momentum=p, type=new_type)
+
+
+def attach_weyl_mass(chi: WeylWf, mass: float, width: float) -> WeylWf:
+    """Attach a propagator to a Dirac wavefunction."""
+    p = chi.momentum
+    wf = chi.wavefunction
+
+    den = propagator_den(p, mass, width)
+    prop = IM * mass * den
+    wavefunction = np.array([prop * wf[0], prop * wf[1]])
+
+    return WeylWf(wavefunction=wavefunction, momentum=p, type=chi.type)
 
 
 def attach_vector(eps: VectorWf, mass: float, width: float) -> VectorWf:
@@ -258,6 +397,148 @@ def current_ff_to_v(
 
     return attach_vector(
         VectorWf(wavefunction=wavefunction, momentum=momentum, direction=1), mass, width
+    )
+
+
+def current_ww_to_v(
+    vertex: VertexWWV, mass: float, width: float, chi: WeylWf, eta: WeylWf
+) -> VectorWf:
+    """Fuse two weyl spinors into a vector boson.
+
+    Parameters
+    ----------
+    vertex : VertexWWV
+        Feynman rule for the W-W-V vertex.
+    mass : float
+        Mass of the resulting vector.
+    width : float
+        Width of the resulting vector.
+    chi, eta : WeylWf
+        Weyl spinors. One must be daggered and the other un-daggered.
+
+    Returns
+    -------
+    eps: VectorWf
+        Resulting vector boson wavefuction.
+    """
+    dagger_type = WeylType.Xd | WeylType.Yd
+    is_chi_dagger = chi.type & dagger_type
+    is_eta_dagger = eta.type & dagger_type
+    assert is_chi_dagger != is_eta_dagger, (
+        "Invalid input spinors."
+        + " One spinor must be daggered and the other un-daggered."
+    )
+
+    if is_chi_dagger:
+        wl = chi.wavefunction
+        pout = chi.momentum
+        wr = eta.wavefunction
+        pin = eta.momentum
+    else:
+        wl = eta.wavefunction
+        pout = eta.momentum
+        wr = chi.wavefunction
+        pin = chi.momentum
+
+    momentum = pin - pout
+
+    wavefunction = vertex.g * np.array(
+        [
+            # sigma[0]
+            wl[0] * wr[0] + wl[1] * wr[1],
+            # sigma[1]
+            -(wl[0] * wr[1] + wl[1] * wr[0]),
+            # sigma[2]
+            -IM * (-wl[0] * wr[1] + wl[1] * wr[0]),
+            # sigma[3]
+            -(wl[0] * wr[0] - wl[1] * wr[1]),
+        ]
+    )
+
+    return attach_vector(
+        VectorWf(wavefunction=wavefunction, momentum=momentum, direction=1), mass, width
+    )
+
+
+def current_ws_to_w(
+    vertex: VertexWWS, mass: float, width: float, chi: WeylWf, phi: ScalarWf
+) -> WeylWf:
+    """Fuse two weyl spinors into a scalar boson.
+
+    Parameters
+    ----------
+    vertex : VertexWWS
+        Feynman rule for the W-W-S vertex.
+    mass : float
+        Mass of the resulting vector.
+    width : float
+        Width of the resulting vector.
+    chi, eta : WeylWf
+        Weyl spinors. Both spinors must be daggered or un-daggered.
+
+    Returns
+    -------
+    phi: ScalarWf
+        Resulting scalar boson wavefuction.
+    """
+    is_chi_dagger = chi.type & DAGGER_TYPE
+
+    if is_chi_dagger:
+        sgn = -1.0
+    else:
+        sgn = 1.0
+
+    momentum = chi.momentum + sgn * phi.momentum
+    wavefunction = vertex.g * chi.wavefunction
+
+    return attach_weyl(
+        WeylWf(wavefunction=wavefunction, momentum=momentum, type=chi.type), mass, width
+    )
+
+
+def current_ww_to_s(
+    vertex: VertexWWS, mass: float, width: float, chi: WeylWf, eta: WeylWf
+) -> ScalarWf:
+    """Fuse two weyl spinors into a scalar boson.
+
+    Parameters
+    ----------
+    vertex : VertexWWS
+        Feynman rule for the W-W-S vertex.
+    mass : float
+        Mass of the resulting vector.
+    width : float
+        Width of the resulting vector.
+    chi, eta : WeylWf
+        Weyl spinors. Both spinors must be daggered or un-daggered.
+
+    Returns
+    -------
+    phi: ScalarWf
+        Resulting scalar boson wavefuction.
+    """
+    dagger_type = WeylType.Xd | WeylType.Yd
+    is_chi_dagger = chi.type & dagger_type
+    is_eta_dagger = eta.type & dagger_type
+    assert is_chi_dagger == is_eta_dagger, (
+        "Invalid input spinors."
+        + " Both spinors must be daggered or both must be un-daggered."
+    )
+
+    if is_chi_dagger:
+        wl = chi.wavefunction
+        wr = eta.wavefunction
+        sgn = -1
+    else:
+        wl = eta.wavefunction
+        wr = chi.wavefunction
+        sgn = 1.0
+
+    momentum = sgn * (chi.momentum + eta.momentum)
+    wavefunction = vertex.g * (wl[0] * wr[0] - wl[1] * wr[1])
+
+    return attach_scalar(
+        ScalarWf(wavefunction=wavefunction, momentum=momentum, direction=1), mass, width
     )
 
 
