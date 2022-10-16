@@ -42,6 +42,34 @@ class VertexFFV(NamedTuple):
     right: RealOrComplex
 
 
+class VertexWWS(NamedTuple):
+    """
+    Vertex representing weyl-weyl-scalar vertex corresponding to the
+    interaction: g * S * chi * chi
+
+    Parameters
+    ----------
+    g: complex
+        Coupling coefficient.
+    """
+
+    g: RealOrComplex
+
+
+class VertexWWV(NamedTuple):
+    """
+    Vertex representing weyl-weyl-vector vertex corresponding to the
+    interaction: g * V[mu] * chi^+ * SigmaBar[mu] * eta
+
+    Parameters
+    ----------
+    g: float
+        Coupling coefficient.
+    """
+
+    g: RealOrComplex
+
+
 class VertexVVVV(NamedTuple):
     """
     Vertex representing four-vector vertex corresponding to the
