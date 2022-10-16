@@ -4,8 +4,9 @@ import numpy as np
 import pytest
 
 from helax.numpy.dirac import WeylS0, WeylS1, WeylS2, WeylS3
-from helax.numpy.wavefunctions import (weyl_lower_index, weyl_raise_index,
-                                       weyl_x, weyl_xd, weyl_y, weyl_yd)
+
+from .weyl import (weyl_lower_index, weyl_raise_index, weyl_x, weyl_xd, weyl_y,
+                   weyl_yd)
 
 
 def _sigma_momentum(momentum, bar=False):

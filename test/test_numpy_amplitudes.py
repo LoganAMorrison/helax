@@ -8,6 +8,7 @@ from helax.numpy.lvector import lnorm_sqr
 from helax.numpy.phase_space import PhaseSpace
 from helax.numpy.utils import abs2, kallen_lambda
 from helax.numpy.wavefunctions import DiracWf, ScalarWf, VectorWf
+from helax.vertices import VertexFFS, VertexFFV
 
 MUON_MASS = 1.056584e-01
 G_FERMI = 1.166379e-05
@@ -141,7 +142,7 @@ def test_width_mu_to_e_nu_nu():
         pvm = momenta[:, 2]
         pmu = np.sum(momenta, axis=1)
 
-        v_wll = amplitudes.VertexFFV(left=EL / (np.sqrt(2) * SW), right=0.0)
+        v_wll = VertexFFV(left=EL / (np.sqrt(2) * SW), right=0.0)
 
         mu_wfs = spinor_u(pmu, MUON_MASS)
         e_wfs = spinor_ubar(pe, 0.0)
@@ -179,7 +180,7 @@ def test_width_t_to_b_w():
         b_wfs = spinor_ubar(pb, MASS_B)
         w_wfs = polvec(pw, MASS_W, True)
 
-        v_tbw = amplitudes.VertexFFV(left=EL / (np.sqrt(2.0) * SW), right=0.0)
+        v_tbw = VertexFFV(left=EL / (np.sqrt(2.0) * SW), right=0.0)
 
         def msqrd(it, ib, iw):
             amp = amplitude_ffv(v_tbw, b_wfs[ib], t_wfs[it], w_wfs[iw])
@@ -213,7 +214,7 @@ def test_width_t_to_b_w():
 
 def widths_h_to_f_f(mf, ncf):
     yf = mf / VEV_H
-    vertex = amplitudes.VertexFFS(
+    vertex = VertexFFS(
         left=yf / np.sqrt(2),
         right=yf / np.sqrt(2),
     )
@@ -263,8 +264,8 @@ def test_dark_matter_annihilation_scalar_mediator():
     mass_s = 1.0
     width_s = 1.0
 
-    vxx = amplitudes.VertexFFS(left=gsxx, right=gsxx)
-    vff = amplitudes.VertexFFS(left=gsff, right=gsff)
+    vxx = VertexFFS(left=gsxx, right=gsxx)
+    vff = VertexFFS(left=gsff, right=gsff)
 
     ex = cme / 2.0
     px = np.sqrt(ex**2 - mx**2)
@@ -318,8 +319,8 @@ def test_dark_matter_annihilation_vector_mediator():
     mv = 1.0
     widthv = 1.0
 
-    vxx = amplitudes.VertexFFV(left=gvxx, right=gvxx)
-    vff = amplitudes.VertexFFV(left=gvff, right=gvff)
+    vxx = VertexFFV(left=gvxx, right=gvxx)
+    vff = VertexFFV(left=gvff, right=gvff)
 
     ex = cme / 2.0
     px = np.sqrt(ex**2 - mx**2)
@@ -375,7 +376,7 @@ def widths_z_to_f_f(mf, ncf, t3f, qf):
     pre = EL / (SW * CW)
     left = pre * (t3f - qf * SW**2)
     right = -pre * qf * SW**2
-    vertex = amplitudes.VertexFFV(left=left, right=right)
+    vertex = VertexFFV(left=left, right=right)
 
     def msqrd_z_to_f_f(momenta):
         pf1 = momenta[:, 0]
@@ -441,7 +442,7 @@ def test_width_z_to_e_e():
 
 def widths_ni_to_nj_phi(mi, mj, mphi, y):
 
-    vertex = amplitudes.VertexFFS(left=y, right=y)
+    vertex = VertexFFS(left=y, right=y)
 
     def msqrd_ni_to_nj_phi(momenta):
         pj = momenta[:, 0]

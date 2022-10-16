@@ -76,7 +76,7 @@ k = -p - q
 
 import numpy as np
 
-from helax.vertices import VertexFFS, VertexFFV, VertexWWS, VertexWWV
+from helax.vertices import VertexFFS, VertexFFV
 
 # from .dirac import WeylS0, WeylS1, WeylS2, WeylS3
 from .lvector import ldot, lnorm_sqr
