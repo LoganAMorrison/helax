@@ -199,17 +199,12 @@ def widths_ni_to_nj_phi(mi, mj, mphi, y):
         pi = np.sum(momenta, axis=1)
 
         wfi_u = spinor_u(pi, mi)
-        wfi_vbar = spinor_vbar(pi, mi)
-
         wfj_ubar = spinor_ubar(pj, mj)
-        wfj_v = spinor_v(pj, mj)
 
         wfphi = scalar_wf(pphi, mphi)
 
         def msqrd(ii, ij):
-            amp = amplitude_ffs(vertex, wfj_ubar[ij], wfi_u[ii], wfphi) - amplitude_ffs(
-                vertex, wfi_vbar[ii], wfj_v[ij], wfphi
-            )
+            amp = amplitude_ffs(vertex, wfj_ubar[ij], wfi_u[ii], wfphi)
             return abs2(amp)
 
         idxs = np.array(np.meshgrid([0, 1], [0, 1])).T.reshape(-1, 2)

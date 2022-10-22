@@ -21,6 +21,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
   "Typing :: Typed",
 ]
+exclude = ["*_test.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
@@ -44,6 +45,10 @@ mypy = "^0.971"
 
 [tool.poetry.extras]
 gpu = ["jax", "jaxlib", "chex"]
+
+[tool.pytest.ini_options]
+testpaths = ["helax"]
+python_files = "*_test.py"
 
 
 [build-system]
