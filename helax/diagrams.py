@@ -1,7 +1,7 @@
 import functools as ft
-from typing import Dict, List, NamedTuple, Optional, Union, Sequence, Iterable
 import itertools
 import math
+from typing import Dict, Iterable, List, NamedTuple, Optional, Sequence, Union
 
 
 class MergerRule(NamedTuple):
@@ -167,7 +167,7 @@ def unfold_into(newtrees: List[List[MergeTree]], groups: List[List[MergeTree]]):
 
 def build_trees(roots: List[Root], merger: Merger):
     """Given a set of roots, turn them into `MTree`s and continue to merge the
-    trees into fewer trees using the `mergerules`, which is a dictionary maping
+    trees into fewer trees using the `mergerules`, which is a dictionary mapping
     tuples of heads to a new head: mergerules = Dict([(A,B,C) -> (D,E), ...]).
     After each merging, check if there is a way to `complete` the tree by
     combining all subtrees into a single tree using the `completions` array

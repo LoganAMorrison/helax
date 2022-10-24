@@ -3,34 +3,74 @@
 import numpy as np
 
 Dirac1 = np.array(
-    [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], dtype=np.complex128
+    [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ],
+    dtype=np.complex128,
 )
 DiracG0 = np.array(
-    [[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]], dtype=np.complex128
+    [
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+    ],
+    dtype=np.complex128,
 )
 DiracG1 = np.array(
-    [[0, 0, 0, 1], [0, 0, 1, 0], [0, -1, 0, 0], [-1, 0, 0, 0]], dtype=np.complex128
+    [
+        [0, 0, 0, 1],
+        [0, 0, 1, 0],
+        [0, -1, 0, 0],
+        [-1, 0, 0, 0],
+    ],
+    dtype=np.complex128,
 )
 
 DiracG2 = np.array(
-    [[0, 0, 0, -1j], [0, 0, 1j, 0], [0, 1j, 0, 0], [-1j, 0, 0, 0]], dtype=np.complex128
+    [
+        [0, 0, 0, -1j],
+        [0, 0, 1j, 0],
+        [0, 1j, 0, 0],
+        [-1j, 0, 0, 0],
+    ],
+    dtype=np.complex128,
 )
 DiracG3 = np.array(
-    [[0, 0, 1, 0], [0, 0, 0, -1], [-1, 0, 0, 0], [0, 1, 0, 0]], dtype=np.complex128
+    [
+        [0, 0, 1, 0],
+        [0, 0, 0, -1],
+        [-1, 0, 0, 0],
+        [0, 1, 0, 0],
+    ],
+    dtype=np.complex128,
 )
-DiracG5 = np.array(
-    [[-1, 0, 0, 0], [0, -1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], dtype=np.complex128
-)
+DiracG5 = 1j * DiracG0 @ DiracG1 @ DiracG2 @ DiracG3
+
 
 ProjL = np.array(
-    [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=np.complex128
+    [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+    ],
+    dtype=np.complex128,
 )
 ProjR = np.array(
-    [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], dtype=np.complex128
+    [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ],
+    dtype=np.complex128,
 )
-ChargeConj = np.array(
-    [[0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 0, -1], [0, 0, 1, 0]], dtype=np.complex128
-)
+ChargeConj = 1j * DiracG0 @ DiracG2
+ChargeConjInv = np.linalg.inv(ChargeConj)
 
 # Shape: (4, 4, 4)
 DiracG = np.array([DiracG0, DiracG1, DiracG2, DiracG3])

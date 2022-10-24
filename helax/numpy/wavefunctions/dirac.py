@@ -32,7 +32,7 @@ class DiracWf:
 
 
 def __check_spin_dirac(*, spin: int):
-    assert spin == 1 or spin == -1, "Spin must be 1 or -1."
+    assert spin in [1, -1], "Spin must be 1 or -1."
 
 
 def __chi(*, momentum: RealArray, spin: int) -> ComplexArray:
@@ -95,19 +95,24 @@ def __dirac_spinor(
         If anti = -1, the wavefunction represents a v-spinor.
         If 1, wavefunction represents a u-spinor.
     """
-    pm = np.linalg.norm(momentum[1:], axis=0)
+    norm = np.linalg.norm(momentum[1:], axis=0)
 
-    wp = np.sqrt(momentum[0] + pm)
-    wm = mass / wp
+    omega_u = anti * np.sqrt(momentum[0] + norm)
+    omega_d = anti * mass / omega_u
 
-    if spin == -anti:
-        w = np.array([anti * wp, wm])
-    else:
-        w = np.array([wm, anti * wp])
+    if spin == anti:
+        omega_u, omega_d = omega_d, omega_u
 
-    x = __chi(momentum=momentum, spin=spin * anti)
+    chi = __chi(momentum=momentum, spin=spin * anti)
 
-    return np.array([w[0] * x[0], w[0] * x[1], w[1] * x[0], w[1] * x[1]])
+    return np.array(
+        [
+            omega_u * chi[0],
+            omega_u * chi[1],
+            omega_d * chi[0],
+            omega_d * chi[1],
+        ]
+    )
 
 
 def __spinor_u(*, momentum: RealArray, mass: float, spin: int) -> ComplexArray:
