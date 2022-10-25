@@ -1,6 +1,8 @@
 """Module for computing currents and amplitudes for two fermions and a vector.
 """
 
+# pylint: disable=invalid-name
+
 
 # Notes on signs
 
@@ -117,7 +119,7 @@ def current_fv_to_f(
     vl = vertex.left
     vr = vertex.right
 
-    momentum = psi.momentum * psi.direction * polvec.momentum
+    momentum = psi.momentum + psi.direction * polvec.momentum
 
     if psi.direction == -1:
         wavefunction = np.array(

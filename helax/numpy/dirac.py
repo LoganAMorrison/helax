@@ -69,7 +69,7 @@ ProjR = np.array(
     ],
     dtype=np.complex128,
 )
-ChargeConj = 1j * DiracG0 @ DiracG2
+ChargeConj = -1j * DiracG0 @ DiracG2
 ChargeConjInv = np.linalg.inv(ChargeConj)
 
 # Shape: (4, 4, 4)

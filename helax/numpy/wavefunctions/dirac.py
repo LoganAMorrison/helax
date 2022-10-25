@@ -4,6 +4,8 @@ import numpy as np
 
 from helax.numpy.typing import ComplexArray, RealArray
 
+# pylint: disable=invalid-name
+
 
 @dataclasses.dataclass
 class DiracWf:

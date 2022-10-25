@@ -1,3 +1,7 @@
+"""Tests for dirac wavefunctions."""
+
+# pylint: disable=invalid-name
+
 import pathlib
 import unittest
 from typing import Callable
@@ -37,6 +41,28 @@ def _sigma_momentum(momentum):
         - momentum[2] * DiracG2
         - momentum[3] * DiracG3
     )
+
+
+def _conjugated_spinor_type(spinor_type):
+    if spinor_type == "u":
+        return "vbar"
+    if spinor_type == "v":
+        return "ubar"
+    if spinor_type == "ubar":
+        return "v"
+    if spinor_type == "vbar":
+        return "u"
+
+    raise ValueError(f"Invalid spinor type {spinor_type}")
+
+
+def _conjugate_spinor(spinor_type, spinor):
+    if spinor_type in ["u", "v"]:
+        return -spinor @ ChargeConjInv
+    if spinor_type in ["ubar", "vbar"]:
+        return ChargeConj @ spinor
+
+    raise ValueError(f"Invalid spinor type {spinor_type}")
 
 
 @pytest.mark.parametrize(
@@ -87,36 +113,39 @@ def test_dirac_wf_completeness(spinor_types: tuple[str, str], mass: float):
         (2, 0, 1),
     )
 
-    CC = ChargeConj
-    CCinv = ChargeConjInv
-
     for p, psi_in, psi_out in zip(momenta, flow_in, flow_out):
         pslash = _sigma_momentum(p)
         mmat = mass * Dirac1
         if in_type == "u" and out_type == "ubar":
             # gamma.p + m
             expected = pslash + mmat
+
         elif in_type == "v" and out_type == "vbar":
             # gamma.p - m
             expected = pslash - mmat
+
         elif in_type == "u" and out_type == "v":
             # (gamma.p + m) C^T
-            expected = (pslash + mmat) @ CC.T
+            expected = (pslash + mmat) @ ChargeConj.T
+
         elif in_type == "ubar" and out_type == "vbar":
             # C^-1 (gamma.p - m)
-            expected = CCinv @ (pslash - mmat)
+            expected = ChargeConjInv @ (pslash - mmat)
+
         elif in_type == "vbar" and out_type == "ubar":
             # C^-1 (gamma.p + m)
-            expected = CCinv @ (pslash + mmat)
+            expected = ChargeConjInv @ (pslash + mmat)
+
         elif in_type == "v" and out_type == "u":
             # (gamma.p - m) C^T
-            expected = (pslash - mmat) @ CC.T
+            expected = (pslash - mmat) @ ChargeConj.T
+
         else:
             raise ValueError(f"Invalid in,out types {in_type}, {out_type}")
 
         actual = np.zeros_like(expected, dtype=np.complex128)
         for incoming, outgoing in zip(psi_in, psi_out):
-            actual += np.outer(incoming, outgoing)
+            actual += np.einsum("i,j->ij", incoming, outgoing)
 
         residual = np.max(np.abs(expected - actual))
 
@@ -170,31 +199,22 @@ def test_dirac_wf_dirac_equation(spinor_type: str, mass: float):
 @pytest.mark.parametrize("spin", [-1, 1])
 def test_dirac_wf_conjugation(spinor_type: str, mass: float, spin: int):
     """Test that the spinors satisfy the dirac equation."""
-    spins = (-1, 1)
     if mass == 0:
         momenta = np.array(TEST_DATA[f"{spinor_type}_massless_momenta"])
     else:
         momenta = np.array(TEST_DATA[f"{spinor_type}_massive_momenta"])
 
-    for p in momenta:
-        pslash = _sigma_momentum(p)
-        mmat = mass * Dirac1
+    psi_wfs: np.ndarray = _dirac_spinor(
+        spinor_type, momenta.T, mass, spin
+    ).wavefunction.T
+    psi_cc_wfs = np.array([_conjugate_spinor(spinor_type, psi) for psi in psi_wfs])
+    conj_spinor_type = _conjugated_spinor_type(spinor_type)
+    expected: np.ndarray = _dirac_spinor(
+        conj_spinor_type, momenta.T, mass, spin
+    ).wavefunction
 
-        if spinor_type == "u":
-            # gamma.p + m
-            residual = (pslash - mmat) @ psi
-        elif spinor_type == "v":
-            # gamma.p - m
-            residual = (pslash + mmat) @ psi
-        elif spinor_type == "ubar":
-            # (gamma.p + m) C^T
-            residual = psi @ (pslash - mmat)
-        elif spinor_type == "vbar":
-            residual = psi @ (pslash + mmat)
-        else:
-            raise ValueError(f"Invalid spinor type {spinor_type}")
-
-        assert np.max(np.abs(residual)) < 1e-4
+    for psi_cc, exp in zip(psi_cc_wfs, expected.T):
+        assert np.max(np.abs(psi_cc - exp)) < 1e-4
 
 
 class TestDiracCompleteness(unittest.TestCase):

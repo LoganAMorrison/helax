@@ -73,6 +73,8 @@ k = -p - q
     q <-
 """
 
+# pylint: disable=invalid-name
+
 
 import numpy as np
 
@@ -88,7 +90,7 @@ DAGGER_TYPE = WeylType.Xd | WeylType.Yd
 
 def complex_mass_sqr(mass: float, width: float) -> complex:
     """Returns the complexified mass given the particle's width."""
-    return mass * (mass - 1j * width)
+    return mass * (mass - IM * width)
 
 
 def propagator_den(momentum: RealArray, mass: float, width: float) -> RealArray:
@@ -97,7 +99,29 @@ def propagator_den(momentum: RealArray, mass: float, width: float) -> RealArray:
 
 
 def attach_dirac(psi: DiracWf, mass: float, width: float) -> DiracWf:
-    """Attach a propagator to a Dirac wavefunction."""
+    """Attach a propagator to a Dirac wavefunction.
+
+    The result of attaching a propagator is to a Dirac wavefunction
+    phi is:
+        current = i / (p^2 - m^2 + i * m * G) * (gamma.p + m) * psi
+    for a flowing-in spinor and
+        current = i / (p^2 - m^2 + i * m * G) * psi * (gamma.p + m)
+    for a flowing-out spinor. Here G=width.
+
+    Parameters
+    ----------
+    psi: DiracWf
+        A Dirac wavefunction.
+    mass: float
+        Mass of the Dirac fermion.
+    width: float
+        Width of the Dirac fermion.
+
+    Returns
+    -------
+    current: DiracWf
+        Dirac wavefunction with a propagator attached.
+    """
     p = psi.momentum
     f = psi.wavefunction
 
@@ -133,6 +157,29 @@ def attach_dirac(psi: DiracWf, mass: float, width: float) -> DiracWf:
 
 
 def attach_vector(eps: VectorWf, mass: float, width: float) -> VectorWf:
+    """Attach a vector propagator to a vector wavefunction.
+
+    The result of attaching a vector propagator is to a vector wavefunction
+    eps[mu] is:
+        current[mu] = i / (p^2 - m^2 + i * m * G) * (
+                -g[mu,nu] + p[mu] p[nu] / (p^2 - m^2 + i * m *G)
+        )
+    with G=width.
+
+    Parameters
+    ----------
+    eps: VectorWf
+        A vector wavefunction.
+    mass: float
+        Mass of the vector boson.
+    width: float
+        Width of the vector boson.
+
+    Returns
+    -------
+    current: VectorWf
+        Vector wavefunction with a propagator attached.
+    """
     wf = eps.wavefunction
     k = eps.momentum
     den = propagator_den(k, mass, width)
@@ -148,6 +195,27 @@ def attach_vector(eps: VectorWf, mass: float, width: float) -> VectorWf:
 
 
 def attach_scalar(phi: ScalarWf, mass: float, width: float) -> ScalarWf:
+    """Attach a scalar propagator to a scalar wavefunction.
+
+    The result of attaching a scalar propagator is to a scalar wavefunction
+    phi is:
+        current = i / (p^2 - m^2 + i * m * G) * phi
+    with G=width.
+
+    Parameters
+    ----------
+    phi: ScalarWf
+        A scalar wavefunction.
+    mass: float
+        Mass of the scalar boson.
+    width: float
+        Width of the scalar boson.
+
+    Returns
+    -------
+    current: ScalarWf
+        Scalar wavefunction with a propagator attached.
+    """
     wf = phi.wavefunction * propagator_den(phi.momentum, mass, width)
     return ScalarWf(wavefunction=wf, momentum=phi.momentum, direction=phi.direction)
 
