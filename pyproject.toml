@@ -42,6 +42,8 @@ chex = "^0.1.5"
 black = "^22.8.0"
 pylint = "^2.15.2"
 mypy = "^0.971"
+jupyter = "^1.0.0"
+matplotlib = "^3.6.1"
 
 [tool.poetry.extras]
 gpu = ["jax", "jaxlib", "chex"]

@@ -1,6 +1,11 @@
+"""Tests for fermion-fermion-vector vertex."""
+
+# pylint: disable=invalid-name,too-many-locals,too-many-arguments
+
 from typing import Tuple
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 from helax.numpy import amplitudes, wavefunctions
@@ -66,6 +71,39 @@ def polvec(momenta, mass: float, out: bool) -> Tuple[VectorWf, VectorWf, VectorW
     )
 
 
+def dirac_spinor(
+    spinor_type: str, momentum: npt.NDArray, mass: float
+) -> tuple[DiracWf, DiracWf]:
+    """Generate spinor wavefunctions for all spins.
+
+    Parameters
+    ----------
+    spinor_type: str
+        Type of spinor to generate ("u", "v", "ubar" or "vbar".)
+    momenta: array
+        Momentum of the field.
+    mass: float
+        Mass of the field.
+
+    Returns
+    -------
+    wavefunctions: tuple[DiracWf, DiracWf]
+        Spinor wavefunctions with spin down and up.
+    """
+    if spinor_type == "u":
+        spinor_fn = wavefunctions.spinor_u
+    elif spinor_type == "ubar":
+        spinor_fn = wavefunctions.spinor_ubar
+    elif spinor_type == "v":
+        spinor_fn = wavefunctions.spinor_v
+    elif spinor_type == "vbar":
+        spinor_fn = wavefunctions.spinor_vbar
+    else:
+        raise ValueError(f"Invalid spinor type {type}")
+
+    return (spinor_fn(momentum, mass, -1), spinor_fn(momentum, mass, 1))
+
+
 def current_ff_to_v(
     vertex, mass: float, width: float, psi_out: DiracWf, psi_in: DiracWf
 ):
@@ -77,6 +115,7 @@ def amplitude_ffv(vertex, psi_out: DiracWf, psi_in: DiracWf, eps: VectorWf):
 
 
 def wavefunction_iter(*wavefuncs):
+    """Wavefunctions to iterate over."""
     idx_list = []
     for wf in wavefuncs:
         if isinstance(wf, wavefunctions.ScalarWf):
@@ -94,6 +133,8 @@ def wavefunction_iter(*wavefuncs):
 
 
 def test_width_mu_to_e_nu_nu():
+    """Test the decay width of a muon into e + nu + nu."""
+
     def msqrd_mu_to_e_nu_nu_analytic(momenta):
         t = lnorm_sqr(momenta[:, 0] + momenta[:, 2])
         s = lnorm_sqr(momenta[:, 1] + momenta[:, 1])
@@ -159,6 +200,8 @@ def test_width_mu_to_e_nu_nu():
 
 
 def test_width_t_to_b_w():
+    """Test the decay width of a top-quark into b + W."""
+
     def msqrd_t_to_b_w(momenta):
         pb = momenta[:, 0]
         pw = momenta[:, 1]
@@ -200,7 +243,13 @@ def test_width_t_to_b_w():
 # ============================================================================
 
 
-def test_dark_matter_annihilation_vector_mediator():
+@pytest.mark.parametrize(
+    "gvxx,gvff,mx,mf,cme,mv,widthv", [(1.0, 1.0, 10.0, 1.0, 30.0, 1.0, 1.0)]
+)
+def test_dark_matter_annihilation_vector_mediator(
+    gvxx: float, gvff: float, mx: float, mf: float, cme: float, mv: float, widthv: float
+):
+    """Test the cross-section for DM + DM -> f + fbar."""
     gvxx = 1.0
     gvff = 1.0
     mx = 10.0
@@ -263,6 +312,7 @@ def test_dark_matter_annihilation_vector_mediator():
 
 
 def widths_z_to_f_f(mf, ncf, t3f, qf):
+    """Compute the decay width of the Z into two fermions."""
     pre = EL / (SW * CW)
     left = pre * (t3f - qf * SW**2)
     right = -pre * qf * SW**2
@@ -306,6 +356,7 @@ def widths_z_to_f_f(mf, ncf, t3f, qf):
 
 
 def test_width_z_to_b_b():
+    """Test the decay width of the Z into bottom quarks."""
     mf = MASS_B
     ncf = 3
     t3f = -0.5
@@ -316,6 +367,7 @@ def test_width_z_to_b_b():
 
 
 def test_width_z_to_e_e():
+    """Test the decay width of the Z into electrons."""
     mf = MASS_E
     ncf = 1
     t3f = -0.5
@@ -323,3 +375,77 @@ def test_width_z_to_e_e():
 
     width, analytic = widths_z_to_f_f(mf=mf, ncf=ncf, t3f=t3f, qf=qf)
     assert float(width / analytic) == pytest.approx(1.0, rel=1e-3, abs=0.0)
+
+
+def _vertex_znv(theta, genn, genv):
+    if genn == genv:
+        coupling = 1j * EL * np.sin(2 * theta) / (4 * CW * SW)
+    else:
+        coupling = 0.0
+
+    return VertexFFV(
+        left=coupling,
+        right=coupling,
+    )
+
+
+def _vertex_zvv(theta, genn, genv1, genv2):
+    if genv1 == genv2:
+        coupling = EL / (2 * CW * SW)
+        if genn == genv1:
+            coupling = coupling * np.cos(theta) ** 2
+    else:
+        coupling = 0.0
+
+    return VertexFFV(
+        left=coupling,
+        right=-coupling,
+    )
+
+
+def msqrd_n_to_v_v_v(momenta, *, mass, theta, genn, genv1, genv2, genv3):
+    """Compute the decay width of a RH neutrino into 3 neutrinos."""
+
+    pv1 = momenta[:, 0]
+    pv2 = momenta[:, 1]
+    pv3 = momenta[:, 2]
+    pn = np.sum(momenta, axis=1)
+
+    wf_i = dirac_spinor("u", pn, mass)
+    wf_j_1 = dirac_spinor("ubar", pv1, 0.0)
+    wf_k_1 = dirac_spinor("ubar", pv2, 0.0)
+    wf_l_1 = dirac_spinor("v", pv3, 0.0)
+    vji_1 = _vertex_znv(theta, genn, genv1)
+    vkl_1 = _vertex_zvv(theta, genn, genv2, genv3)
+
+    wf_j_2 = dirac_spinor("ubar", pv2, 0.0)
+    wf_k_2 = dirac_spinor("ubar", pv1, 0.0)
+    wf_l_2 = dirac_spinor("v", pv3, 0.0)
+    vji_2 = _vertex_znv(theta, genn, genv2)
+    vkl_2 = _vertex_zvv(theta, genn, genv1, genv3)
+
+    wf_j_3 = dirac_spinor("ubar", pv3, 0.0)
+    wf_k_3 = dirac_spinor("ubar", pv2, 0.0)
+    wf_l_3 = dirac_spinor("v", pv1, 0.0)
+    vji_3 = _vertex_znv(theta, genn, genv3)
+    vkl_3 = _vertex_zvv(theta, genn, genv1, genv2)
+
+    def _amplitude_template(wfi, wfj, wfk, wfl, vji, vkl):
+        wfz = amplitudes.current_ff_to_v(vji, MASS_W, WIDTH_W, wfj, wfi)
+        return amplitude_ffv(vkl, wfk, wfl, wfz)
+
+    def _amplitude(ii, ij, ik, il):
+        wfi = wf_i[ii]
+        return (
+            +_amplitude_template(wfi, wf_j_1[ij], wf_k_1[ik], wf_l_1[il], vji_1, vkl_1)
+            - _amplitude_template(wfi, wf_j_2[ik], wf_k_2[ij], wf_l_2[il], vji_2, vkl_2)
+            - _amplitude_template(wfi, wf_j_3[il], wf_k_3[ik], wf_l_3[ij], vji_3, vkl_3)
+        )
+
+    def _msqrd(ii, ij, ik, il):
+        return np.square(np.abs(_amplitude(ii, ij, ik, il)))
+
+    idxs = np.array(np.meshgrid([0, 1], [0, 1], [0, 1], [0, 1])).T.reshape(-1, 4)
+    res = sum(_msqrd(i_n, i_v1, i_v2, i_v3) for (i_n, i_v1, i_v2, i_v3) in idxs)
+
+    return res / 2.0

@@ -1,3 +1,5 @@
+"""Feynman diagram generation."""
+
 import functools as ft
 import itertools
 import math

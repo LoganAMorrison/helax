@@ -1,11 +1,13 @@
 """
 Module for working with Lorentz-invariant phase-space.
-
 """
+
+# pylint: disable=invalid-name
 
 
 import math
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
+                    Union)
 
 import numpy as np
 import numpy.typing as npt
@@ -24,9 +26,7 @@ def __flat_squared_matrix_element(momentum: RealArray):
 
 
 class PhaseSpace:
-    """
-    Phase space generator and integrator.
-    """
+    """Phase space generator and integrator."""
 
     def __init__(
         self,
@@ -38,11 +38,11 @@ class PhaseSpace:
         Parameters
         ----------
         cme: float
-            Center-of-mass energy of the proccess.
+            Center-of-mass energy of the process.
         masses: array-like
             Array of the final state particle masses.
         msqrd: Callable[[ndarray], float], optional
-            Squared matrix element of the proccess.
+            Squared matrix element of the process.
         """
         ms = np.array(masses)
         n = len(ms)
@@ -62,7 +62,7 @@ class PhaseSpace:
     @property
     def cme(self) -> float:
         """
-        Center-of-mass energy of the proccess.
+        Center-of-mass energy of the process.
         """
         return self.__cme
 
@@ -87,7 +87,7 @@ class PhaseSpace:
     @property
     def msqrd(self) -> Optional[SquaredMatrixElement]:
         """
-        Squared matrix element of the proccess.
+        Squared matrix element of the process.
         """
         return self.__msqrd
 
@@ -156,7 +156,7 @@ class PhaseSpace:
         Returns
         -------
         momenta: ndarray
-            Momenta in the center-of-mass frame. The shape is idential to
+            Momenta in the center-of-mass frame. The shape is identical to
             input shape.
         """
         sum_ps = np.sum(ps, axis=1)
