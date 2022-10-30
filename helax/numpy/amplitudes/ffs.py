@@ -86,13 +86,11 @@ def current_ff_to_s(
     """
     wf_in = psi_in.wavefunction
     wf_out = psi_out.wavefunction
-    vl = vertex.left
-    vr = vertex.right
 
     momentum = psi_in.momentum - psi_out.momentum
-    wavefunction = vl * (wf_in[0] * wf_out[0] + wf_in[1] * wf_out[1]) + vr * (
-        wf_in[2] * wf_out[2] + wf_in[3] * wf_out[3]
-    )
+    wavefunction = vertex.left * (
+        wf_in[0] * wf_out[0] + wf_in[1] * wf_out[1]
+    ) + vertex.right * (wf_in[2] * wf_out[2] + wf_in[3] * wf_out[3])
 
     phi = ScalarWf(wavefunction=wavefunction, momentum=momentum, direction=1)
 

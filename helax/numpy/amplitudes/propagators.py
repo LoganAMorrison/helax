@@ -124,35 +124,28 @@ def attach_dirac(psi: DiracWf, mass: float, width: float) -> DiracWf:
     """
     p = psi.momentum
     f = psi.wavefunction
+    flow = psi.direction
 
     den = propagator_den(psi.momentum, mass, width)
 
-    p1p2 = p[1] + IM * p[2]
-    p1m2 = p[1] - IM * p[2]
-    p0p3 = p[0] + p[3]
-    p0m3 = p[0] - p[3]
+    k1 = p[0] + flow * p[3]  # p0m3
+    k2 = p[0] - flow * p[3]  # p0p3
+    k3 = p[1] + flow * IM * p[2]  # p1m2
+    k4 = p[1] - flow * IM * p[2]  # p1p2
 
-    if psi.direction == -1:
-        wavefunction = np.array(
-            [
-                (mass * f[0] - f[3] * p1m2 + f[2] * p0m3) * den,
-                (mass * f[1] - f[2] * p1p2 + f[3] * p0p3) * den,
-                (mass * f[2] + f[1] * p1m2 + f[0] * p0p3) * den,
-                (mass * f[3] + f[0] * p1p2 + f[1] * p0m3) * den,
-            ]
-        )
-    else:
-        wavefunction = np.array(
-            [
-                (mass * f[0] + f[3] * p1p2 + f[2] * p0p3) * den,
-                (mass * f[1] + f[2] * p1m2 + f[3] * p0m3) * den,
-                (mass * f[2] - f[1] * p1p2 + f[0] * p0m3) * den,
-                (mass * f[3] - f[0] * p1m2 + f[1] * p0p3) * den,
-            ]
-        )
+    wavefunction = np.array(
+        [
+            (mass * f[0] + k1 * f[2] - k3 * f[3]) * den,
+            (mass * f[1] + -k4 * f[2] + k2 * f[3]) * den,
+            (mass * f[2] + k2 * f[0] + k3 * f[1]) * den,
+            (mass * f[3] + k4 * f[0] + k1 * f[1]) * den,
+        ]
+    )
 
     return DiracWf(
-        wavefunction=wavefunction, momentum=psi.momentum, direction=psi.direction
+        wavefunction=wavefunction,
+        momentum=psi.momentum,
+        direction=psi.direction,
     )
 
 
