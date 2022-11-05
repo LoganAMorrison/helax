@@ -177,7 +177,7 @@ def spinor_v(momentum: RealArray, mass: float, spin: int) -> DiracWf:
     wf = __spinor_v(momentum=momentum, mass=mass, spin=spin)
     return DiracWf(
         wavefunction=wf,
-        momentum=momentum,
+        momentum=-momentum,
         direction=1,
     )
 
@@ -200,7 +200,7 @@ def spinor_ubar(momentum: RealArray, mass: float, spin: int) -> DiracWf:
     wf = __spinor_ubar(momentum=momentum, mass=mass, spin=spin)
     return DiracWf(
         wavefunction=wf,
-        momentum=-momentum,
+        momentum=momentum,
         direction=-1,
     )
 
