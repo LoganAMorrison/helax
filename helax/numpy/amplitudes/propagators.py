@@ -178,11 +178,11 @@ def attach_vector(eps: VectorWf, mass: float, width: float) -> VectorWf:
     den = propagator_den(k, mass, width)
 
     if mass == 0:
-        invcm2 = 0.0j
+        invmass2 = 0.0j
     else:
-        invcm2 = 1.0 / complex_mass_sqr(mass, width)
+        invmass2 = 1.0 / mass**2
 
-    wf = (-wf + k * ldot(k, wf) * invcm2) * den
+    wf = (-wf + k * ldot(k, wf) * invmass2) * den
 
     return VectorWf(wavefunction=wf, momentum=k, direction=eps.direction)
 
